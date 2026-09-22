@@ -5,33 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SD Cricket World</title>
 
+  <!-- Adsterra Script -->
+  <script type="text/javascript" src="//www.highperformanceformat.com/a42b100bb615c44933923dcd2649b921/invoke.js"></script>
+
   <style>
     body { margin: 0; overflow: hidden; background: #111; font-family: sans-serif; color: white; text-align: center; }
-    #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; }
-    .interactive { pointer-events: auto; }
+    #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
     .hidden { display: none !important; }
     
-    /* Screens */
-    #welcome-screen, #loading-screen, #setup-screen, #game-over-screen {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.9); display: flex; flex-direction: column;
-      justify-content: center; align-items: center; z-index: 10;
-    }
-    
-    .btn-play { background: #27ae60; color: white; border: none; padding: 12px 24px; font-size: 1.2rem; border-radius: 5px; cursor: pointer; margin-top: 15px; }
-    .btn-play:active { transform: scale(0.95); }
-    
-    /* Scoreboard & Controls */
-    #scoreboard { background: rgba(0,0,0,0.7); padding: 10px; font-size: 1.1rem; display: flex; justify-content: space-around; }
-    #controls { padding: 15px; background: rgba(0,0,0,0.5); }
-    .shot-btn { background: #e67e22; color: white; border: none; padding: 10px 15px; margin: 5px; border-radius: 4px; cursor: pointer; }
-    
-    /* Ad Modal */
-    #ad-modal {
+    #welcome-screen, #ad-modal, #game-over-screen {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.95); display: flex; flex-direction: column;
       justify-content: center; align-items: center; z-index: 100;
     }
+    
+    .btn-play { background: #27ae60; color: white; border: none; padding: 12px 24px; font-size: 1.2rem; border-radius: 5px; cursor: pointer; margin-top: 15px; }
+    #scoreboard { background: rgba(0,0,0,0.8); padding: 15px; font-size: 1.2rem; display: flex; justify-content: space-around; }
+    #controls { padding: 20px; background: rgba(0,0,0,0.6); }
+    .shot-btn { background: #e67e22; color: white; border: none; padding: 12px 20px; margin: 5px; border-radius: 5px; font-size: 1rem; cursor: pointer; }
+    
+    #ad-container { width: 320px; height: 50px; background: #222; margin: 15px 0; display: flex; justify-content: center; align-items: center; }
   </style>
 </head>
 <body>
@@ -40,60 +33,72 @@
   <div id="welcome-screen">
     <h1>SD Cricket World</h1>
     <p>3D Realistic Cricket Simulator</p>
-    <button class="btn-play" onclick="startGame()">Play Now</button>
+    <button class="btn-play" onclick="startGame()">Play Game</button>
   </div>
 
-  <!-- GAME UI -->
+  <!-- GAMEPLAY UI -->
   <div id="ui-layer" class="hidden">
-    <div id="scoreboard" class="interactive">
-      <div>Score: <span id="runs">0</span>/<span id="wickets">0</span></div>
+    <div id="scoreboard">
+      <div>Runs: <span id="runs">0</span>/<span id="wickets">0</span></div>
       <div>Overs: <span id="overs">0.0</span></div>
     </div>
     
-    <div id="controls" class="interactive">
-      <button class="shot-btn" onclick="playShot('Lofted')">Lofted</button>
-      <button class="shot-btn" onclick="playShot('Ground')">Ground</button>
-      <button class="shot-btn" onclick="playShot('Defend')">Defend</button>
+    <div id="controls">
+      <button class="shot-btn" onclick="playBall('Lofted')">Lofted</button>
+      <button class="shot-btn" onclick="playBall('Ground')">Ground</button>
+      <button class="shot-btn" onclick="playBall('Defend')">Defend</button>
     </div>
   </div>
 
-  <!-- OVER END AD MODAL -->
+  <!-- AD POPUP MODAL (Triggers at 1.0, 2.0 overs or Match End) -->
   <div id="ad-modal" class="hidden">
-    <h2>Over Complete!</h2>
-    <p>Loading next over...</p>
+    <h2 id="ad-title">Over Completed!</h2>
+    <p id="ad-desc">Watch this space while next over loads...</p>
+    
+    <div id="ad-container">
+      <div id="container-a42b100bb615c44933923dcd2649b921"></div>
+    </div>
 
-    <button class="btn-play" onclick="closeAd()">Continue Game</button>
+    <button class="btn-play" onclick="closeAd()">Continue</button>
   </div>
 
   <script>
     let totalRuns = 0;
     let wickets = 0;
     let totalBalls = 0;
-
-    // आपका Smartlink_3 का URL (अगर आपने कॉपी किया हुआ पूरा लिंक अलग है तो नीचे वाले URL में पेस्ट कर लें)
-    const smartlinkUrl = "https://www.highperformanceformat.com/3134772";
+    const maxOvers = 5; // 5 overs inning
 
     function startGame() {
+      totalRuns = 0;
+      wickets = 0;
+      totalBalls = 0;
+      updateScoreboard();
       document.getElementById('welcome-screen').classList.add('hidden');
       document.getElementById('ui-layer').classList.remove('hidden');
     }
 
-    function playShot(type) {
-      let possibleRuns = [0, 1, 2, 4, 6, 'W'];
-      let outcome = possibleRuns[Math.floor(Math.random() * possibleRuns.length)];
+    function playBall(type) {
+      if (totalBalls >= maxOvers * 6) return;
 
-      if (outcome === 'W') {
+      let outcomes = [0, 1, 2, 4, 6, 'W'];
+      let result = outcomes[Math.floor(Math.random() * outcomes.length)];
+
+      if (result === 'W') {
         wickets++;
       } else {
-        totalRuns += outcome;
+        totalRuns += result;
       }
       totalBalls++;
 
       updateScoreboard();
 
-      // ओवर खत्म (हर 6 गेंद पर)
+      // Check Over Complete (1.0, 2.0, 3.0 etc.)
       if (totalBalls % 6 === 0) {
-        showOverAd();
+        if (totalBalls >= maxOvers * 6) {
+          triggerAd("Inning / Match Completed!");
+        } else {
+          triggerAd("Over Completed!");
+        }
       }
     }
 
@@ -105,18 +110,29 @@
       document.getElementById('overs').innerText = `${overs}.${balls}`;
     }
 
-    function showOverAd() {
-      // ओवर खत्म होते ही स्मार्टलिंक एड नए टैब में खुलेगा
-      window.open(smartlinkUrl, '_blank');
-
+    function triggerAd(titleText) {
+      document.getElementById('ad-title').innerText = titleText;
       document.getElementById('ui-layer').classList.add('hidden');
       document.getElementById('ad-modal').classList.remove('hidden');
+      
+      // Reload Adsterra Unit
+      let adBox = document.getElementById('ad-container');
+      adBox.innerHTML = '<div id="container-a42b100bb615c44933923dcd2649b921"></div>';
+      let script = document.createElement('script');
+      script.type = 'text/javascript';
+      script.src = '//www.highperformanceformat.com/a42b100bb615c44933923dcd2649b921/invoke.js';
+      adBox.appendChild(script);
     }
 
     function closeAd() {
       document.getElementById('ad-modal').classList.add('hidden');
-      document.getElementById('ui-layer').classList.remove('hidden');
+      if (totalBalls >= maxOvers * 6) {
+        document.getElementById('welcome-screen').classList.remove('hidden');
+      } else {
+        document.getElementById('ui-layer').classList.remove('hidden');
+      }
     }
   </script>
+
 </body>
 </html>
