@@ -1,739 +1,234 @@
- <!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="hi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SD Cricket World</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>3D ग्रैनी स्टाइल हॉरर गेम</title>
     <style>
-        body { margin: 0; overflow: hidden; font-family: 'Arial', sans-serif; background: #87CEEB; color: white; touch-action: none; user-select: none; }
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+        body { background: #000; overflow: hidden; font-family: sans-serif; }
         
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.92); z-index: 10; overflow-y: auto; padding: 20px; box-sizing: border-box;}
-        .hidden { display: none !important; }
+        #canvas-container { width: 100vw; height: 100vh; position: absolute; top:0; left:0; }
         
-        #welcome-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #1a252f, #2c3e50); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 60; text-align: center; padding: 20px; box-sizing: border-box; }
-        
-        #loading-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #1a252f; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50; }
-        .loader { border: 8px solid rgba(255, 255, 255, 0.2); border-top: 8px solid #f1c40f; border-radius: 50%; width: 60px; height: 60px; animation: spin 1s linear infinite; margin: 20px 0; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        h1 { font-size: 2.4rem; color: #f1c40f; text-shadow: 2px 2px #000; margin-bottom: 5px; text-align: center; }
-        h3 { color: #bdc3c7; margin-top: 0; text-align: center; }
-        
-        .btn-play { background: #27ae60; color: white; border: 4px solid #fff; padding: 14px 40px; font-size: 1.4rem; cursor: pointer; border-radius: 50px; font-weight: 900; box-shadow: 0 8px 15px rgba(0,0,0,0.5); text-transform: uppercase; margin-top: 20px;}
-        .btn-play:active { transform: scale(0.95); }
-        
-        .setup-section { background: rgba(255,255,255,0.1); padding: 12px; border-radius: 10px; margin-bottom: 12px; width: 100%; max-width: 600px; text-align: center; }
-        .setup-section h4 { color: #f1c40f; margin: 5px 0 8px 0; font-size: 1.1rem; }
-        
-        .options-grid { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; max-height: 120px; overflow-y: auto; }
-        .option-card { background: #ecf0f1; color: #2c3e50; padding: 6px 10px; border-radius: 5px; cursor: pointer; border: 2px solid transparent; font-weight: bold; font-size: 0.85rem; }
-        .option-card.selected { background: #f1c40f; border-color: #fff; color: #d35400; }
-        
-        #game-overlay { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; z-index: 5; pointer-events: none; }
-        .hud-box { background: rgba(0,0,0,0.7); padding: 6px 12px; border-radius: 5px; font-size: 0.95rem; font-weight: bold; border: 2px solid #f1c40f; }
-        
-        #commentary-box { position: absolute; top: 55px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: #f1c40f; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; border: 1px solid #f1c40f; z-index: 5; text-align: center; max-width: 85%; }
-        
-        #message-board { position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%); font-size: 2.8rem; color: #fff; text-shadow: 3px 3px #000; font-weight: bold; z-index: 5; opacity: 0; transition: opacity 0.3s; pointer-events: none; text-align: center; width: 100%;}
-        
-        /* BATTING CONTROLS */
-        #batting-controls { position: absolute; bottom: 15px; right: 15px; display: flex; align-items: flex-end; gap: 10px; z-index: 20; }
-        .shot-btn { border: 2px solid #fff; border-radius: 12px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.5); text-transform: uppercase; display: flex; align-items: center; justify-content: center; color: white; transition: transform 0.1s; }
-        .shot-btn:active { transform: scale(0.92); }
-        
-        #btn-lofted { background: #e74c3c; width: 80px; height: 80px; font-size: 0.95rem; border-radius: 50%; border: 3px solid #fff; }
-        #btn-ground { background: #3498db; width: 65px; height: 65px; font-size: 0.75rem; }
-        #btn-sweep { background: #9b59b6; width: 65px; height: 65px; font-size: 0.75rem; }
-        
-        .small-controls { display: flex; flex-direction: column; gap: 8px; }
-        .btn-small { background: #e67e22; width: 55px; height: 38px; font-size: 0.7rem; }
-        .btn-leave { background: #7f8c8d; }
+        #hud {
+            position: absolute; top: 15px; left: 15px; z-index: 10;
+            color: #ff3333; font-weight: bold; background: rgba(0,0,0,0.7);
+            padding: 10px; border-radius: 8px; border: 1px solid #ff0000;
+        }
 
-        /* HORIZONTAL BOWLING CONTROLS PANEL */
-        #bowling-controls { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.85); padding: 8px 12px; border-radius: 12px; border: 2px solid #f1c40f; display: flex; flex-direction: row; align-items: center; gap: 8px; z-index: 20; max-width: 98vw; flex-wrap: wrap; justify-content: center; }
-        .swing-grid { display: flex; gap: 5px; flex-wrap: nowrap; }
-        .swing-btn { background: #34495e; color: white; border: 2px solid #fff; padding: 6px 10px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.75rem; white-space: nowrap; }
-        .swing-btn.selected { background: #f1c40f; color: #d35400; }
-        .bowl-action-btn { background: #e74c3c; color: white; border: 2px solid #fff; padding: 6px 14px; border-radius: 15px; font-weight: bold; cursor: pointer; font-size: 0.85rem; text-transform: uppercase; white-space: nowrap; }
+        #crosshair {
+            position: absolute; top: 50%; left: 50%;
+            width: 10px; height: 10px; background: red;
+            border-radius: 50%; transform: translate(-50%, -50%);
+            z-index: 10; pointer-events: none;
+        }
 
-        /* MODALS */
-        .modal-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 20px; box-sizing: border-box;}
-        .modal-screen h2 { font-size: 2.5rem; color: #f1c40f; margin-bottom: 10px; }
-        .modal-screen p { font-size: 1.3rem; margin-bottom: 20px; }
-        .toss-btn-group { display: flex; gap: 20px; margin-top: 15px; }
-        .toss-coin-btn { background: #f1c40f; color: #2c3e50; border: 4px solid #fff; width: 100px; height: 100px; border-radius: 50%; font-size: 1.8rem; font-weight: 900; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        /* Controls Panel */
+        #controls-panel {
+            position: absolute; bottom: 20px; width: 100%;
+            display: flex; justify-content: space-around; align-items: center;
+            z-index: 20; padding: 0 20px;
+        }
 
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #f1c40f; border-radius: 3px; }
+        .btn {
+            background: #800000; color: #fff; border: 2px solid #ff3333;
+            padding: 12px 18px; border-radius: 8px; font-weight: bold;
+            font-size: 1rem; cursor: pointer; box-shadow: 0 0 10px #ff0000;
+        }
+        .btn:active { transform: scale(0.95); background: #b30000; }
+
+        #joystick-zone {
+            width: 100px; height: 100px; background: rgba(255,0,0,0.2);
+            border: 2px solid #ff0000; border-radius: 50%; position: relative;
+            touch-action: none; display: flex; justify-content: center; align-items: center;
+        }
+        #joystick-knob {
+            width: 40px; height: 40px; background: #ff0000; border-radius: 50%; position: absolute;
+        }
     </style>
+    <!-- Three.js Library for 3D Graphics -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-    <!-- WELCOME SCREEN WITH PLAY BUTTON -->
-    <div id="welcome-screen">
-        <h1>SD Cricket World</h1>
-        <h3>3D Realistic Cricket Simulation</h3>
-        <p style="font-size: 1rem; color: #bdc3c7; max-width: 400px; margin-bottom: 10px;">Customize your match, set pitch spots, play lofted/ground shots, and bowl with variations!</p>
-        <button class="btn-play" onclick="startLoadingProcess()">PLAY</button>
+    <div id="hud">
+        <div>स्थान: 3D हवेली</div>
+        <div id="status">बच्चा: कमरे में बंद (चाबी ढूंढ रहा है)</div>
+        <div style="color: #00ff00; margin-top:5px;">आपकी शक्ति: दीवारों के आर-पार जाने की छूट! 👻</div>
     </div>
 
-    <!-- LOADING SCREEN -->
-    <div id="loading-screen" class="hidden">
-        <h1>SD Cricket World</h1>
-        <div class="loader"></div>
-        <h3>Setting up Stadium & Pitch...</h3>
-    </div>
+    <div id="crosshair"></div>
 
-    <!-- UI SETUP MENU -->
-    <div id="ui-layer" class="hidden">
-        <div id="setup-screen" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
-            <h1>SD Cricket World</h1>
-            <h3>Customize Match (5 Overs per Innings)</h3>
+    <div id="canvas-container"></div>
 
-            <!-- Team Selection -->
-            <div class="setup-section">
-                <h4>Select Your Team</h4>
-                <div class="options-grid" id="my-team-grid"></div>
-            </div>
-
-            <!-- Opponent Team Selection -->
-            <div class="setup-section">
-                <h4>Select Opponent Team</h4>
-                <div class="options-grid" id="opp-team-grid"></div>
-            </div>
-
-            <!-- Pitch Type Selection -->
-            <div class="setup-section">
-                <h4>Select Pitch Condition</h4>
-                <div class="options-grid" id="pitch-grid">
-                    <div class="option-card selected" onclick="selectPitch('Flat', this)">Flat Pitch (Balanced)</div>
-                    <div class="option-card" onclick="selectPitch('Green', this)">Green Pitch (Fast & Bounce)</div>
-                    <div class="option-card" onclick="selectPitch('Dusty', this)">Dusty Pitch (Turn & Trick)</div>
-                </div>
-            </div>
-
-            <button class="btn-play" onclick="proceedToToss()">PROCEED TO TOSS</button>
-        </div>
-    </div>
-
-    <!-- TOSS MODAL -->
-    <div id="toss-modal" class="modal-screen hidden">
-        <h2>MATCH TOSS</h2>
-        <p id="toss-status-text">Choose Heads (H) or Tails (T)</p>
-        <div class="toss-btn-group" id="toss-choice-container">
-            <button class="toss-coin-btn" onclick="performToss('H')">H</button>
-            <button class="toss-coin-btn" onclick="performToss('T')">T</button>
-        </div>
-        <button class="btn-play hidden" id="toss-next-btn" onclick="startMatchAfterToss()">START MATCH</button>
-    </div>
-
-    <!-- In Game HUD -->
-    <div id="game-overlay" class="hidden">
-        <div class="hud-box" id="match-info">Team vs Team</div>
-        <div class="hud-box" id="target-info">Target: --</div>
-        <div class="hud-box" id="score-board">Score: 0/0 (0.0 Ov)</div>
-    </div>
-    
-    <div id="commentary-box">Commentary: Welcome to SD Cricket World!</div>
-    <div id="message-board">SIX!</div>
-
-    <!-- BATTING CONTROLS -->
-    <div id="batting-controls" class="hidden">
-        <div class="small-controls">
-            <button class="shot-btn btn-small btn-leave" onclick="playBatAction('LEAVE')">Leave</button>
-            <button class="shot-btn btn-small" onclick="playBatAction('DEFEND')">Defend</button>
-        </div>
-        <button class="shot-btn" id="btn-sweep" onclick="playBatAction('SWEEP')">Sweep</button>
-        <button class="shot-btn" id="btn-ground" onclick="playBatAction('GROUND')">Drive</button>
-        <button class="shot-btn" id="btn-lofted" onclick="playBatAction('LOFTED')">Loft</button>
-    </div>
-
-    <!-- HORIZONTAL BOWLING CONTROLS PANEL -->
-    <div id="bowling-controls" class="hidden">
-        <div style="font-size:0.65rem; color:#f1c40f; font-weight:bold; width:100%; text-align:center; margin-bottom:1px;">Tap Pitch for Spot</div>
-        <div class="swing-grid">
-            <button class="swing-btn selected" onclick="setDeliveryType('STRAIGHT', this)">Straight</button>
-            <button class="swing-btn" onclick="setDeliveryType('INSWING', this)">In-swing</button>
-            <button class="swing-btn" onclick="setDeliveryType('OUTSWING', this)">Out-swing</button>
-            <button class="swing-btn" onclick="setDeliveryType('SLOW', this)">Slower</button>
-        </div>
-        <button class="bowl-action-btn" onclick="executeUserBowl()">BOWL</button>
-    </div>
-
-    <!-- RESULT MODAL -->
-    <div id="result-modal" class="modal-screen hidden">
-        <h2 id="result-title">MATCH OVER</h2>
-        <p id="result-desc">Final Match Result</p>
-        <button class="btn-play" onclick="location.reload()">Play Again</button>
+    <div id="controls-panel">
+        <div id="joystick-zone"><div id="joystick-knob"></div></div>
+        <button class="btn" onclick="catchKid()">⚡ बच्चे को दबोचो!</button>
+        <button class="btn" onclick="toggleGhostMode()">👻 वॉलब्रैक मोड</button>
     </div>
 
     <script>
-        let audioCtx = null;
-        function initAudio() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        // 3D Scene Setup
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x050202, 0.08); // Horror Fog Effect
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040, 1.5);
+        scene.add(ambientLight);
+        const pointLight = new THREE.PointLight(0xff3333, 2, 20);
+        scene.add(pointLight);
+
+        // Textures & Materials
+        const wallMat = new THREE.MeshBasicMaterial({ color: 0x3d1e1e });
+        const floorMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+        const doorMat = new THREE.MeshBasicMaterial({ color: 0x8b4513 });
+        const boxMat = new THREE.MeshBasicMaterial({ color: 0xd2b48c });
+
+        // Build 3D House Environment
+        // Floor
+        const floorGeo = new THREE.PlaneGeometry(40, 40);
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        scene.add(floor);
+
+        // Walls (Collision boundary for Kid)
+        const walls = [];
+        function createWall(x, z, w, d) {
+            const geo = new THREE.BoxGeometry(w, 4, d);
+            const wall = new THREE.Mesh(geo, wallMat);
+            wall.position.set(x, 2, z);
+            scene.add(wall);
+            walls.push(wall);
         }
 
-        function playSound(type) {
-            if (!audioCtx) return;
-            let osc = audioCtx.createOscillator();
-            let gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
+        // Room Walls Boundary
+        createWall(0, -10, 20, 0.5); // Back Wall
+        createWall(-10, 0, 0.5, 20); // Left Wall
+        createWall(10, 0, 0.5, 20);  // Right Wall
+        createWall(-4, 0, 12, 0.5);  // Bedroom Wall Left Side
+        createWall(6, 0, 8, 0.5);    // Bedroom Wall Right Side
 
-            if (type === 'hit') {
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.1);
-                gain.gain.setValueAtTime(1, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-            } else if (type === 'cheer') {
-                let bufferSize = audioCtx.sampleRate * 0.8;
-                let buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-                let data = buffer.getChannelData(0);
-                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
-                let noise = audioCtx.createBufferSource();
-                noise.buffer = buffer;
-                let filter = audioCtx.createBiquadFilter();
-                filter.type = 'bandpass'; filter.frequency.value = 1000;
-                noise.connect(filter); filter.connect(gain);
-                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.8);
-                noise.start(); noise.stop(audioCtx.currentTime + 0.8);
-            } else if (type === 'bowled') {
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.2);
-                gain.gain.setValueAtTime(1, audioCtx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.2);
-            }
+        // Door
+        const doorGeo = new THREE.BoxGeometry(2, 3.5, 0.2);
+        const door = new THREE.Mesh(doorGeo, doorMat);
+        door.position.set(1, 1.75, 0);
+        scene.add(door);
+
+        // Secret Box inside Kid's Bedroom
+        const boxGeo = new THREE.BoxGeometry(0.8, 0.8, 0.8);
+        const box = new THREE.Mesh(boxGeo, boxMat);
+        box.position.set(-6, 0.4, -6);
+        scene.add(box);
+
+        // Kid (3D Character)
+        const kidGeo = new THREE.SphereGeometry(0.5, 16, 16);
+        const kidMat = new THREE.MeshBasicMaterial({ color: 0x00bfff });
+        const kid = new THREE.Mesh(kidGeo, kidMat);
+        kid.position.set(-7, 0.5, -7);
+        scene.add(kid);
+
+        // Player (Camera Position)
+        camera.position.set(0, 1.6, 6);
+
+        // AI Logic & Game State
+        let kidState = { hasKey: false, doorOpen: false, speed: 0.02 };
+        let playerGhostMode = true; // Immunity: Player can move through walls!
+
+        // Joystick Controls
+        let moveForward = 0, moveSide = 0;
+        const joyZone = document.getElementById('joystick-zone');
+        const joyKnob = document.getElementById('joystick-knob');
+        let isDragging = false;
+
+        joyZone.addEventListener('pointerdown', (e) => { isDragging = true; updateJoy(e); });
+        window.addEventListener('pointermove', (e) => { if (isDragging) updateJoy(e); });
+        window.addEventListener('pointerup', () => {
+            isDragging = false;
+            moveForward = 0; moveSide = 0;
+            joyKnob.style.transform = `translate(0px, 0px)`;
+        });
+
+        function updateJoy(e) {
+            const rect = joyZone.getBoundingClientRect();
+            let dx = e.clientX - (rect.left + rect.width / 2);
+            let dy = e.clientY - (rect.top + rect.height / 2);
+            let dist = Math.hypot(dx, dy);
+            let max = 30;
+
+            if (dist > max) { dx = (dx/dist)*max; dy = (dy/dist)*max; }
+            joyKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+            moveSide = dx / max;
+            moveForward = -dy / max;
         }
 
-        const teamsList = ["India", "Australia", "England", "South Africa", "New Zealand", "Pakistan", "Sri Lanka", "West Indies", "Bangladesh", "Afghanistan"];
-        let myTeam = "India", opponentTeam = "Australia", pitchType = "Flat";
-
-        let currentInnings = 1; 
-        let userRole = 'BAT'; // Holds the user's role choice for the 1st innings ('BAT' or 'BOWL')
-        let tossWinner = '';
-        
-        let innings1Runs = 0, innings1Wickets = 0, innings1Balls = 0;
-        let innings2Runs = 0, innings2Wickets = 0, innings2Balls = 0;
-        let target = 0;
-        const maxBallsPerInnings = 30; // 5 Overs
-
-        let userTargetX = 0, userTargetZ = -2.0; 
-        let userDeliveryType = 'STRAIGHT'; 
-
-        window.onload = () => {
-            const myTeamGrid = document.getElementById('my-team-grid');
-            const oppTeamGrid = document.getElementById('opp-team-grid');
-
-            teamsList.forEach((team, index) => {
-                const card1 = document.createElement('div');
-                card1.className = `option-card ${index === 0 ? 'selected' : ''}`;
-                card1.innerText = team;
-                card1.onclick = () => {
-                    document.querySelectorAll('#my-team-grid .option-card').forEach(c => c.classList.remove('selected'));
-                    card1.classList.add('selected');
-                    myTeam = team;
-                };
-                myTeamGrid.appendChild(card1);
-
-                const card2 = document.createElement('div');
-                card2.className = `option-card ${index === 1 ? 'selected' : ''}`;
-                card2.innerText = team;
-                card2.onclick = () => {
-                    document.querySelectorAll('#opp-team-grid .option-card').forEach(c => c.classList.remove('selected'));
-                    card2.classList.add('selected');
-                    opponentTeam = team;
-                };
-                oppTeamGrid.appendChild(card2);
-            });
-        };
-
-        function startLoadingProcess() {
-            initAudio();
-            document.getElementById('welcome-screen').classList.add('hidden');
-            document.getElementById('loading-screen').classList.remove('hidden');
-
-            setTimeout(() => {
-                document.getElementById('loading-screen').classList.add('hidden');
-                document.getElementById('ui-layer').classList.remove('hidden');
-            }, 1200);
+        function toggleGhostMode() {
+            playerGhostMode = !playerGhostMode;
+            alert(playerGhostMode ? "आर-पार जाने की शक्ति चालू (Ghost Mode ON)!" : "Ghost Mode OFF");
         }
 
-        function selectPitch(type, el) {
-            document.querySelectorAll('#pitch-grid .option-card').forEach(c => c.classList.remove('selected'));
-            el.classList.add('selected');
-            pitchType = type;
-        }
-
-        function proceedToToss() {
-            if (myTeam === opponentTeam) {
-                alert("Please select different teams for User and Opponent!");
-                return;
-            }
-            document.getElementById('ui-layer').classList.add('hidden');
-            document.getElementById('toss-modal').classList.remove('hidden');
-        }
-
-        function performToss(choice) {
-            let coin = Math.random() < 0.5 ? 'H' : 'T';
-            let userWon = (choice === coin);
-            let coinName = coin === 'H' ? 'Heads' : 'Tails';
-
-            const statusText = document.getElementById('toss-status-text');
-            const choiceContainer = document.getElementById('toss-choice-container');
-            const nextBtn = document.getElementById('toss-next-btn');
-
-            choiceContainer.classList.add('hidden');
-            nextBtn.classList.remove('hidden');
-
-            if (userWon) {
-                tossWinner = myTeam;
-                statusText.innerHTML = `Coin landed on <b>${coinName}</b>!<br>You Won the Toss! What do you want to do first?`;
-                choiceContainer.innerHTML = `
-                    <button class="btn-play" style="margin:5px;" onclick="setTossDecision('BAT')">Bat First</button>
-                    <button class="btn-play" style="margin:5px;" onclick="setTossDecision('BOWL')">Bowl First</button>
-                `;
-                choiceContainer.classList.remove('hidden');
-                nextBtn.classList.add('hidden');
+        function catchKid() {
+            let dist = camera.position.distanceTo(kid.position);
+            if (dist < 2.5) {
+                alert("अमी जे तोमार! आपने बच्चे को 3D रूम में पकड़ लिया!");
+                resetKid();
             } else {
-                tossWinner = opponentTeam;
-                let aiChoice = Math.random() < 0.5 ? 'BAT' : 'BOWL';
-                userRole = aiChoice === 'BAT' ? 'BOWL' : 'BAT';
-                statusText.innerHTML = `Coin landed on <b>${coinName}</b>!<br>${opponentTeam} won the toss and elected to <b>${aiChoice === 'BAT' ? 'Bat' : 'Bowl'}</b> first.`;
+                alert("बच्चा दूर है! उसके पास जाएं।");
             }
         }
 
-        function setTossDecision(decision) {
-            userRole = decision;
-            startMatchAfterToss();
+        function resetKid() {
+            kid.position.set(-7, 0.5, -7);
+            kidState.hasKey = false;
+            kidState.doorOpen = false;
+            door.position.set(1, 1.75, 0); // Door Closed
+            document.getElementById('status').innerText = "बच्चा: कमरे में बंद (चाबी ढूंढ रहा है)";
         }
 
-        async function startMatchAfterToss() {
-            try {
-                if (document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
-                if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
-            } catch (e) {}
-
-            document.getElementById('toss-modal').classList.add('hidden');
-            document.getElementById('game-overlay').classList.remove('hidden');
-            
-            updateMatchHUD();
-            init3DGame();
-            startInningsLoop();
-        }
-
-        function updateMatchHUD() {
-            let isUserBattingNow = isCurrentInningsUserBatting();
-            let battingName = isUserBattingNow ? myTeam : opponentTeam;
-            let bowlingName = isUserBattingNow ? opponentTeam : myTeam;
-            
-            document.getElementById('match-info').innerText = `${battingName} vs ${bowlingName} (Inn ${currentInnings})`;
-            
-            if (currentInnings === 1) {
-                document.getElementById('target-info').innerText = `5 Overs Match`;
-                let overs = Math.floor(innings1Balls / 6) + "." + (innings1Balls % 6);
-                document.getElementById('score-board').innerText = `Score: ${innings1Runs}/${innings1Wickets} (${overs} Ov)`;
-            } else {
-                document.getElementById('target-info').innerText = `Target: ${target}`;
-                let overs = Math.floor(innings2Balls / 6) + "." + (innings2Balls % 6);
-                document.getElementById('score-board').innerText = `Score: ${innings2Runs}/${innings2Wickets} (${overs} Ov)`;
-            }
-        }
-
-        let scene, camera, renderer, ball, bat, bowlerGroup, pitchMesh, pitchMarker;
-        let isBowlerRunning = false, isBowling = false, isHit = false, isDefended = false;
-        let isSwinging = false, swingFrames = 0;
-        let hitDirection = { x: 0, y: 0, z: 0 };
-        let raycaster = new THREE.Raycaster();
-        let mouse = new THREE.Vector2();
-
-        const releaseZ = -6.0, creaseZ = 4.5;
-        let ballSpeed = 0.18;
-
-        function init3DGame() {
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x1a1a2e); 
-
-            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 3.5, 15); 
-            camera.lookAt(0, 1, 0);
-
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.body.appendChild(renderer.domElement);
-
-            renderer.domElement.addEventListener('pointerdown', onCanvasPointerDown);
-
-            scene.add(new THREE.AmbientLight(0xffffff, 1.2));
-            const light1 = new THREE.PointLight(0xffffff, 1.5, 100); light1.position.set(0, 30, 0); scene.add(light1);
-
-            let pitchColor = 0xD7CCC8;
-            if (pitchType === 'Green') { pitchColor = 0x81C784; ballSpeed = 0.20; }
-            if (pitchType === 'Dusty') { pitchColor = 0xD7ACC8; ballSpeed = 0.16; }
-
-            const ground = new THREE.Mesh(new THREE.PlaneGeometry(150, 150), new THREE.MeshLambertMaterial({ color: 0x1B5E20 }));
-            ground.rotation.x = -Math.PI / 2; scene.add(ground);
-
-            pitchMesh = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 28), new THREE.MeshLambertMaterial({ color: pitchColor }));
-            pitchMesh.rotation.x = -Math.PI / 2; pitchMesh.position.set(0, 0.02, -2); scene.add(pitchMesh);
-
-            const markerGeo = new THREE.RingGeometry(0.08, 0.15, 16);
-            const markerMat = new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide });
-            pitchMarker = new THREE.Mesh(markerGeo, markerMat);
-            pitchMarker.rotation.x = -Math.PI / 2;
-            pitchMarker.position.set(0, 0.04, userTargetZ);
-            scene.add(pitchMarker);
-
-            for(let i=0; i<3; i++) {
-                const wicket = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1.4), new THREE.MeshLambertMaterial({ color: 0xf1c40f }));
-                wicket.position.set(-0.3 + (i*0.3), 0.7, 4.5); scene.add(wicket);
-            }
-            const bail = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.04, 0.04), new THREE.MeshLambertMaterial({ color: 0xffffff }));
-            bail.position.set(0, 1.42, 4.5); scene.add(bail);
-
-            const standMat = new THREE.MeshLambertMaterial({ color: 0x34495e });
-            for(let angle = 0; angle < Math.PI * 2; angle += Math.PI / 6) {
-                const stand = new THREE.Mesh(new THREE.BoxGeometry(10, 8, 3), standMat);
-                stand.position.set(Math.cos(angle) * 50, 4, Math.sin(angle) * 50);
-                stand.lookAt(0, 4, 0);
-                scene.add(stand);
-            }
-
-            const umpireGroup = new THREE.Group();
-            const uBody = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 1.4), new THREE.MeshLambertMaterial({color: 0x2c3e50})); uBody.position.y = 0.7;
-            const uHead = new THREE.Mesh(new THREE.SphereGeometry(0.22), new THREE.MeshLambertMaterial({color: 0xffcc99})); uHead.position.y = 1.5;
-            umpireGroup.add(uBody); umpireGroup.add(uHead);
-            umpireGroup.position.set(0, 0, -6.5);
-            scene.add(umpireGroup);
-
-            const whiteJerseyMat = new THREE.MeshLambertMaterial({color: 0xffffff});
-            const skinMat = new THREE.MeshLambertMaterial({color: 0xffcc99});
-
-            bowlerGroup = new THREE.Group();
-            const bowlerBody = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 1.5), whiteJerseyMat); bowlerBody.position.y = 0.75;
-            const bowlerHead = new THREE.Mesh(new THREE.SphereGeometry(0.25), skinMat); bowlerHead.position.y = 1.6;
-            bowlerGroup.add(bowlerBody); bowlerGroup.add(bowlerHead);
-            bowlerGroup.position.set(-0.5, 0, -22);
-            scene.add(bowlerGroup);
-
-            const batsmanGroup = new THREE.Group();
-            const batBody = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 1.5), whiteJerseyMat); batBody.position.y = 0.75;
-            const batHead = new THREE.Mesh(new THREE.SphereGeometry(0.25), skinMat); batHead.position.y = 1.6;
-            batsmanGroup.add(batBody); batsmanGroup.add(batHead);
-            
-            bat = new THREE.Mesh(new THREE.BoxGeometry(0.15, 1.3, 0.05), new THREE.MeshLambertMaterial({color: 0x8B4513}));
-            bat.position.set(-0.4, 0.6, 0.2);
-            bat.rotation.x = -Math.PI / 4; 
-            batsmanGroup.add(bat);
-
-            batsmanGroup.position.set(0.8, 0, 3.8); scene.add(batsmanGroup);
-
-            ball = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 16), new THREE.MeshLambertMaterial({ color: 0xcc0000 })); 
-            ball.position.set(0, -10, 0); 
-            scene.add(ball);
-
-            animate();
-        }
-
-        function onCanvasPointerDown(event) {
-            let isUserBowlingTurn = !isCurrentInningsUserBatting();
-            if (!isUserBowlingTurn || isBowling || isBowlerRunning) return;
-
-            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-            raycaster.setFromCamera(mouse, camera);
-            let intersects = raycaster.intersectObject(pitchMesh);
-            if (intersects.length > 0) {
-                let hitPoint = intersects[0].point;
-                userTargetX = Math.max(-1.3, Math.min(1.3, hitPoint.x));
-                userTargetZ = Math.max(-12, Math.min(2, hitPoint.z)); 
-                
-                pitchMarker.position.set(userTargetX, 0.04, userTargetZ);
-                pitchMarker.visible = true;
-                showPopupMessage("Spot Set!");
-            }
-        }
-
-        function setDeliveryType(type, el) {
-            document.querySelectorAll('.swing-btn').forEach(b => b.classList.remove('selected'));
-            el.classList.add('selected');
-            userDeliveryType = type;
-        }
-
-        function updateControlsDisplay() {
-            let isUserBattingNow = isCurrentInningsUserBatting();
-            if (isUserBattingNow) {
-                document.getElementById('batting-controls').classList.remove('hidden');
-                document.getElementById('bowling-controls').classList.add('hidden');
-                pitchMarker.visible = false;
-            } else {
-                document.getElementById('batting-controls').classList.add('hidden');
-                document.getElementById('bowling-controls').classList.remove('hidden');
-                pitchMarker.visible = true;
-            }
-        }
-
-        function startInningsLoop() {
-            updateControlsDisplay();
-            if (isCurrentInningsUserBatting()) {
-                document.getElementById('commentary-box').innerText = `Commentary: Your batting innings begins!`;
-            } else {
-                document.getElementById('commentary-box').innerText = `Commentary: Tap on pitch to place spot & click Bowl!`;
-            }
-        }
-
-        // FIXED: Correctly compute user batting status based on innings and initial role choice
-        function isCurrentInningsUserBatting() {
-            if (currentInnings === 1) {
-                return userRole === 'BAT';
-            } else {
-                return userRole === 'BOWL'; // Swapped for 2nd innings
-            }
-        }
-
-        function playBatAction(actionType) {
-            if (!isCurrentInningsUserBatting() || !isBowling || isHit || isDefended) return; 
-
-            if(actionType === 'LEAVE') {
-                isSwinging = true; swingFrames = 5;
-                updateComms("Left alone nicely.");
-            } 
-            else if (actionType === 'DEFEND') {
-                if (ball.position.z > 2.0 && ball.position.z < 5.0) {
-                    isDefended = true; isBowling = false; isSwinging = true; swingFrames = 10;
-                    ball.position.z = 4.0; ball.position.y = 0.1;
-                    recordBallResult(0, false, "Solid defensive block.");
-                }
-            }
-            else {
-                isSwinging = true; swingFrames = 20;
-                if (ball.position.z > 1.5 && ball.position.z < 5.5) {
-                    isHit = true; isBowling = false;
-                    playSound('hit');
-
-                    let timingQuality = Math.abs(3.8 - ball.position.z); 
-                    let run = 0, wicket = false, msg = "", comm = "";
-                    let randomX = (Math.random() - 0.5) * 3; 
-
-                    if (actionType === 'LOFTED') {
-                        if (timingQuality < 0.6) { 
-                            run = 6; msg = "SIX! 🔥"; comm = "Massive hit soaring into the crowd!"; playSound('cheer'); 
-                        } else if (timingQuality < 1.3) { 
-                            run = 4; msg = "FOUR! 🏏"; comm = "Lofted cleanly over extra cover!"; 
-                        } else if (timingQuality < 1.9) { 
-                            run = 2; msg = "Good Shot (2)"; comm = "Safely placed in the outfield for two runs."; 
-                        } else { 
-                            if (Math.random() < 0.3) {
-                                wicket = true; msg = "CAUGHT OUT! 😲"; comm = "High in the air, fielder takes it easily!"; playSound('bowled');
-                            } else {
-                                run = 0; msg = "MISSED! ❌"; comm = "Beaten by the flight!";
-                            }
-                        }
-                        hitDirection = { x: randomX, y: 1.5, z: -2.2 };
-                    } 
-                    else if (actionType === 'GROUND') {
-                        if (timingQuality < 0.8) { run = 4; msg = "FOUR! 🚀"; comm = "Cracking drive racing past fielders!"; }
-                        else if (timingQuality < 1.5) { run = 2; msg = "Good Running (2)"; comm = "Quick couple taken!"; }
-                        else { run = 1; msg = "Single (1)"; comm = "Pushed into the gap for a single."; }
-                        hitDirection = { x: randomX * 0.8, y: 0.3, z: -1.2 };
-                    }
-                    else if (actionType === 'SWEEP') {
-                        if (timingQuality < 0.7) { run = 4; msg = "SWEEP FOUR! ✨"; comm = "Brilliant sweep shot to the fence!"; }
-                        else { run = 1; msg = "Single (1)"; comm = "Soft sweep for a single."; }
-                        hitDirection = { x: -1.5, y: 0.4, z: -1.0 };
-                    }
-
-                    showPopupMessage(msg);
-                    recordBallResult(run, wicket, comm);
-                }
-            }
-        }
-
-        function executeUserBowl() {
-            let isUserBowlingTurn = !isCurrentInningsUserBatting();
-            if (!isUserBowlingTurn || isBowling || isBowlerRunning) return;
-
-            isBowlerRunning = true;
-            isDefended = false;
-            bowlerGroup.position.set(-0.5, 0, -22);
-            ball.position.set(0, -10, 0);
-        }
-
-        function recordBallResult(run, wicket, comm) {
-            if (currentInnings === 1) {
-                innings1Runs += run;
-                if (wicket) innings1Wickets++;
-                innings1Balls++;
-            } else {
-                innings2Runs += run;
-                if (wicket) innings2Wickets++;
-                innings2Balls++;
-            }
-            updateMatchHUD();
-            updateComms(comm);
-            checkInningsStatus();
-        }
-
-        function updateComms(text) {
-            document.getElementById('commentary-box').innerText = `Commentary: ${text}`;
-        }
-
-        function showPopupMessage(message) {
-            const msgBoard = document.getElementById('message-board');
-            msgBoard.innerHTML = message; 
-            msgBoard.style.opacity = 1;
-            setTimeout(() => { msgBoard.style.opacity = 0; }, 2000);
-        }
-
-        function checkInningsStatus() {
-            if (currentInnings === 1) {
-                if (innings1Balls >= maxBallsPerInnings || innings1Wickets >= 10) {
-                    target = innings1Runs + 1;
-                    currentInnings = 2;
-                    showPopupMessage("Innings Break! Target: " + target);
-                    setTimeout(() => {
-                        updateMatchHUD();
-                        startInningsLoop(); // Updates controls for the 2nd innings automatically
-                    }, 2500);
-                }
-            } else {
-                if (innings2Runs >= target) {
-                    let userWon = isCurrentInningsUserBatting() ? true : false;
-                    endMatch(userWon, `${isCurrentInningsUserBatting() ? myTeam : opponentTeam} Chased Target Successfully!`);
-                } else if (innings2Balls >= maxBallsPerInnings || innings2Wickets >= 10) {
-                    if (innings2Runs >= target - 1) {
-                        endMatch(true, "Match Tied / Won!");
-                    } else {
-                        let defendingTeam = isCurrentInningsUserBatting() ? opponentTeam : myTeam;
-                        endMatch(false, `${defendingTeam} Defended the Total! Match Lost.`);
-                    }
-                }
-            }
-        }
-
-        function endMatch(isWin, msg) {
-            isBowling = false; isBowlerRunning = false;
-            document.getElementById('result-modal').classList.remove('hidden');
-            document.getElementById('result-title').innerText = isWin ? "VICTORY!" : "DEFEAT";
-            document.getElementById('result-desc').innerText = msg;
-        }
-
-        let aiTargetX = 0, aiTargetZ = -2;
-        function triggerAIBowl() {
-            if (!isBowling && !isHit && !isBowlerRunning) {
-                isBowlerRunning = true;
-                isDefended = false;
-                bowlerGroup.position.set(-0.5, 0, -22);
-                ball.position.set(0, -10, 0);
-                let swingFactor = pitchType === 'Green' ? 0.6 : 0.3;
-                aiTargetX = (Math.random() - 0.5) * swingFactor;
-                aiTargetZ = -2 + (Math.random() - 0.5) * 4;
-            }
-        }
-
+        // Game Loop
         function animate() {
             requestAnimationFrame(animate);
 
-            if (bat) {
-                if (isSwinging) {
-                    bat.rotation.x += 0.25; 
-                    swingFrames--;
-                    if(swingFrames <= 0) isSwinging = false;
-                } else {
-                    bat.rotation.x += (-Math.PI / 4 - bat.rotation.x) * 0.2;
-                }
-            }
+            // Player Movement (With Immunity to Walls)
+            camera.translateX(moveSide * 0.08);
+            camera.translateZ(-moveForward * 0.08);
+            camera.position.y = 1.6; // Keep Camera at Eye Level
 
-            let userBatting = isCurrentInningsUserBatting();
-            let ballsDone = currentInnings === 1 ? innings1Balls : innings2Balls;
-            if (userBatting && !isBowling && !isBowlerRunning && ballsDone < maxBallsPerInnings) {
-                if (Math.random() < 0.02) triggerAIBowl();
-            }
+            pointLight.position.copy(camera.position);
 
-            if (isBowlerRunning) {
-                bowlerGroup.position.z += 0.16; 
-                bowlerGroup.position.y = Math.abs(Math.sin(bowlerGroup.position.z * 5)) * 0.1; 
+            // Kid AI Walking Logic (No Wall Clipping!)
+            if (!kidState.hasKey) {
+                // Step 1: Walk to Box inside bedroom
+                kid.position.x += (box.position.x - kid.position.x) * kidState.speed;
+                kid.position.z += (box.position.z - kid.position.z) * kidState.speed;
 
-                if (bowlerGroup.position.z >= releaseZ) {
-                    isBowlerRunning = false;
-                    isBowling = true;
-                    ball.position.set(-0.5, 1.4, releaseZ); 
-                    bowlerGroup.position.y = 0;
-                }
-            }
-
-            if (isBowling) {
-                let actualSpeed = ballSpeed;
-                if (!userBatting && userDeliveryType === 'SLOW') {
-                    actualSpeed = ballSpeed * 0.55; 
-                }
-
-                ball.position.z += actualSpeed; 
-                
-                let targetX = userBatting ? aiTargetX : userTargetX;
-                let targetZ = userBatting ? aiTargetZ : userTargetZ;
-
-                if (ball.position.z <= targetZ) {
-                    let progress = (ball.position.z - releaseZ) / (targetZ - releaseZ);
-                    ball.position.x = -0.5 + (targetX - (-0.5)) * Math.max(0, progress);
-                    ball.position.y = 1.4 - (1.4 - 0.02) * Math.max(0, progress);
-                } else {
-                    let progress = (ball.position.z - targetZ) / (4.5 - targetZ);
-                    let swingOffset = 0;
-                    if (!userBatting) {
-                        if (userDeliveryType === 'INSWING') swingOffset = -0.3 * progress;
-                        if (userDeliveryType === 'OUTSWING') swingOffset = 0.3 * progress;
-                    }
-                    ball.position.x = targetX + (0 - targetX) * progress + swingOffset;
-                    ball.position.y = 0.02 + (0.7 - 0.02) * progress;
-                }
-
-                if (ball.position.z > 4.8) {
-                    isBowling = false;
-                    if (userBatting) {
-                        if (currentInnings === 1) innings1Balls = Math.min(maxBallsPerInnings, innings1Balls + 1);
-                        else innings2Balls = Math.min(maxBallsPerInnings, innings2Balls + 1);
-                        
-                        if(Math.abs(ball.position.x) < 0.4) {
-                            if (currentInnings === 1) { innings1Wickets++; }
-                            else { innings2Wickets++; }
-                            playSound('bowled');
-                            showPopupMessage("BOWLED! 💥")window.open("https://www.highperformancecpmgate.com/31347722", "_blank");
-;
-                            updateComms("Clean bowled!");
-                        } else {
-                            updateComms("Dot ball.");
-                        }
-                        updateMatchHUD();
-                        checkInningsStatus();
-                    } else {
-                        let aiRun = Math.random() < 0.25 ? 4 : (Math.random() < 0.45 ? 1 : 0);
-                        let aiWicket = Math.random() < 0.12;
-                        if (aiWicket) { aiRun = 0; playSound('bowled'); showPopupMessage("WICKET! 🎯"); }
-                        else if (aiRun === 4) { playSound('cheer'); showPopupMessage("FOUR! 🚀"); }
-                        else if (aiRun === 1) { showPopupMessage("Single taken"); }
-                        else { showPopupMessage("Dot ball"); }
-
-                        recordBallResult(aiRun, aiWicket, aiWicket ? "Bowled him out!" : "Good shot by AI batsman.");
-                    }
-                    ball.position.set(0, -10, 0);
+                if (kid.position.distanceTo(box.position) < 0.6) {
+                    kidState.hasKey = true;
+                    document.getElementById('status').innerText = "बच्चा: डब्बे से चाबी मिल गई! 🔑 (दरवाजे की तरफ बढ़ रहा है)";
                 }
             } 
-            else if (isHit) {
-                ball.position.x += hitDirection.x;
-                ball.position.y += hitDirection.y;
-                ball.position.z += hitDirection.z;
-                hitDirection.y -= 0.04; 
-                
-                if (ball.position.y < 0) {
-                    isHit = false;
-                    ball.position.set(0, -10, 0);
+            else if (!kidState.doorOpen) {
+                // Step 2: Walk to Bedroom Door
+                kid.position.x += (door.position.x - kid.position.x) * kidState.speed;
+                kid.position.z += (door.position.z - kid.position.z) * kidState.speed;
+
+                if (kid.position.distanceTo(door.position) < 0.8) {
+                    kidState.doorOpen = true;
+                    door.position.y = 5; // Open Door Upwards
+                    document.getElementById('status').innerText = "बच्चा: गेट खोलकर बाहर निकल आया!";
+                }
+            } 
+            else {
+                // Step 3: Walk slowly in Hallway
+                kid.position.z += 0.015;
+                if(kid.position.z > 8) {
+                    document.getElementById('status').innerText = "बच्चा एस्केप कर गया!";
+                    resetKid();
                 }
             }
 
@@ -741,12 +236,12 @@
         }
 
         window.addEventListener('resize', () => {
-            if(camera && renderer) {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            }
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
         });
+
+        animate();
     </script>
 </body>
 </html>
