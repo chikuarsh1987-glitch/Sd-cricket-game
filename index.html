@@ -1,30 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>SD Cricket World</title>
-
-  <!-- Adsterra Script -->
-  <script type="text/javascript" src="//www.highperformanceformat.com/a42b100bb615c44933923dcd2649b921/invoke.js"></script>
 
   <style>
     body { margin: 0; overflow: hidden; background: #111; font-family: sans-serif; color: white; text-align: center; }
     #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
     .hidden { display: none !important; }
     
-    #welcome-screen, #ad-modal, #game-over-screen {
+    #welcome-screen, #ad-modal {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.95); display: flex; flex-direction: column;
       justify-content: center; align-items: center; z-index: 100;
     }
     
     .btn-play { background: #27ae60; color: white; border: none; padding: 12px 24px; font-size: 1.2rem; border-radius: 5px; cursor: pointer; margin-top: 15px; }
+    .btn-play:active { transform: scale(0.95); }
+    
     #scoreboard { background: rgba(0,0,0,0.8); padding: 15px; font-size: 1.2rem; display: flex; justify-content: space-around; }
     #controls { padding: 20px; background: rgba(0,0,0,0.6); }
     .shot-btn { background: #e67e22; color: white; border: none; padding: 12px 20px; margin: 5px; border-radius: 5px; font-size: 1rem; cursor: pointer; }
     
-    #ad-container { width: 320px; height: 50px; background: #222; margin: 15px 0; display: flex; justify-content: center; align-items: center; }
+    .smartlink-card {
+      background: #222; border: 2px solid #27ae60; padding: 20px; border-radius: 10px; margin: 20px; width: 80%; max-width: 300px;
+    }
   </style>
 </head>
 <body>
@@ -32,8 +33,8 @@
   <!-- WELCOME SCREEN -->
   <div id="welcome-screen">
     <h1>SD Cricket World</h1>
-    <p>3D Realistic Cricket Simulator</p>
-    <button class="btn-play" onclick="startGame()">Play Game</button>
+    <p>3D Realistic Cricket Game</p>
+    <button class="btn-play" onclick="resetGame()">Play Match</button>
   </div>
 
   <!-- GAMEPLAY UI -->
@@ -50,29 +51,36 @@
     </div>
   </div>
 
-  <!-- AD POPUP MODAL (Triggers at 1.0, 2.0 overs or Match End) -->
+  <!-- INNING BREAK / MATCH END SMARTLINK MODAL -->
   <div id="ad-modal" class="hidden">
-    <h2 id="ad-title">Over Completed!</h2>
-    <p id="ad-desc">Watch this space while next over loads...</p>
+    <h2 id="ad-title">Inning Break!</h2>
+    <p id="ad-desc">Match Completed (5 Overs)</p>
     
-    <div id="ad-container">
-      <div id="container-a42b100bb615c44933923dcd2649b921"></div>
+    <div class="smartlink-card">
+      <p style="margin-bottom: 10px; font-size: 0.9rem; color: #ccc;">Claim Bonus or Continue Match:</p>
+      <!-- Smartlink Trigger Button -->
+      <button class="btn-play" style="background: #e74c3c; width: 100%;" onclick="openSmartlink()">🎁 Continue / Claim Bonus</button>
     </div>
 
-    <button class="btn-play" onclick="closeAd()">Continue</button>
-  </div>
+    <button class="btn-play" onclick="resetGame()">Play Again</button>
+  </div>31347722
 
   <script>
     let totalRuns = 0;
     let wickets = 0;
     let totalBalls = 0;
-    const maxOvers = 5; // 5 overs inning
+    const maxOvers = 5; // 5 Overs match
 
-    function startGame() {
+    // ⚠️ यहाँ अपना Adsterra Smartlink URL पेस्ट करें
+    const SMARTLINK_URL = "https://www.highperformancecpmgate.com/xxxxxx"; 
+
+    function resetGame() {
       totalRuns = 0;
       wickets = 0;
       totalBalls = 0;
       updateScoreboard();
+      
+      document.getElementById('ad-modal').classList.add('hidden');
       document.getElementById('welcome-screen').classList.add('hidden');
       document.getElementById('ui-layer').classList.remove('hidden');
     }
@@ -92,13 +100,9 @@
 
       updateScoreboard();
 
-      // Check Over Complete (1.0, 2.0, 3.0 etc.)
-      if (totalBalls % 6 === 0) {
-        if (totalBalls >= maxOvers * 6) {
-          triggerAd("Inning / Match Completed!");
-        } else {
-          triggerAd("Over Completed!");
-        }
+      // 5 Overs (30 balls) खत्म होने पर Smartlink Modal दिखाना
+      if (totalBalls >= maxOvers * 6) {
+        showInningBreakModal();
       }
     }
 
@@ -110,26 +114,17 @@
       document.getElementById('overs').innerText = `${overs}.${balls}`;
     }
 
-    function triggerAd(titleText) {
-      document.getElementById('ad-title').innerText = titleText;
+    function showInningBreakModal() {
       document.getElementById('ui-layer').classList.add('hidden');
       document.getElementById('ad-modal').classList.remove('hidden');
-      
-      // Reload Adsterra Unit
-      let adBox = document.getElementById('ad-container');
-      adBox.innerHTML = '<div id="container-a42b100bb615c44933923dcd2649b921"></div>';
-      let script = document.createElement('script');
-      script.type = 'text/javascript';
-      script.src = '//www.highperformanceformat.com/a42b100bb615c44933923dcd2649b921/invoke.js';
-      adBox.appendChild(script);
     }
 
-    function closeAd() {
-      document.getElementById('ad-modal').classList.add('hidden');
-      if (totalBalls >= maxOvers * 6) {
-        document.getElementById('welcome-screen').classList.remove('hidden');
+    // Smartlink खोलने का फ़ंक्शन
+    function openSmartlink() {
+      if (SMARTLINK_URL && SMARTLINK_URL !== "https://www.highperformancecpmgate.com/xxxxxx") {
+        window.open(SMARTLINK_URL, '_blank');
       } else {
-        document.getElementById('ui-layer').classList.remove('hidden');
+        alert("कृपया कोड में SMARTLINK_URL की जगह अपना Adsterra Smartlink डालें!");
       }
     }
   </script>
